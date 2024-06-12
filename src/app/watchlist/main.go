@@ -1,6 +1,7 @@
 package main
 
 import (
+	"watchlist/business"
 	serviceConstants "watchlist/commons/constants"
 	"watchlist/router"
 
@@ -40,7 +41,11 @@ func main() {
 		panic(fmt.Errorf(genericConstants.ConfigBindingFailedError))
 	}
 
+	// Start Kafka producer in a separate goroutine
+	go business.StartProducer()
+
 	startRouter(ctx)
+
 }
 
 func initConfigs(ctx context.Context) {

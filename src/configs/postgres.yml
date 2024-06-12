@@ -1,8 +1,8 @@
-host: eltp.postgres.database.azure.com
-user: eltp
-password: Coditas@123
+host: localhost
+user: postgres
+password: Root@123
 dbName: eltp-database
-port: 5432
-sslMode: require
+port: 5433
+sslMode: disable
 TimeZone: Asia/Kolkata
 isMockConnection: false

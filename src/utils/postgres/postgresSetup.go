@@ -22,6 +22,8 @@ import (
 	"gorm.io/plugin/prometheus"
 )
 
+var DB *gorm.DB
+
 type PostGresConClient struct {
 	GormDb *gorm.DB
 	SqlDb  *sql.DB
@@ -107,6 +109,7 @@ func ConnectPostgresDatabase(ctx context.Context, postgresConfig models.Postgres
 	log.Info(genericConstants.PostgresConnectionSuccessful)
 
 	SetPostgresClient(db, sqlDB)
+	DB = db
 
 	return nil
 }

@@ -49,4 +49,5 @@ func (controller *CreateWatchlistController) HandleCreateWatchlist(ctx *gin.Cont
 		return
 	}
 	utils.SendCreated(ctx, serviceConstants.WatchlistCreatedSuccessfully)
+
 }
