@@ -6,13 +6,14 @@ import (
 	"authentication/docs"
 	"authentication/handler"
 	"authentication/repositories"
-	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	"net/http"
 	genericConstants "stock_broker_application/src/constants"
 	"stock_broker_application/src/middleware/headerCheck"
 	"stock_broker_application/src/utils/postgres"
+
+	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func init() {
@@ -24,6 +25,8 @@ func GetRouter(middlewares ...gin.HandlerFunc) *gin.Engine {
 	router.Use(middlewares...)
 	router.Use(gin.Recovery())
 	connectionWithDb := postgres.GetPostGresClient().GormDb
+	useDBMocks := true
+
 	//dependency injection for signup
 	userRepoSignUp := repositories.NewUserSignUpInstance()
 	userSignUpService := business.NewSignUpService(userRepoSignUp)
@@ -37,9 +40,15 @@ func GetRouter(middlewares ...gin.HandlerFunc) *gin.Engine {
 	otpService := business.NewOTPService(userRepository)
 	otpValidationController := handler.NewOTPValidationController(otpService)
 	//Dependency Injection for forgot-Password-Feature
-	repository := repositories.NewForgotPasswordRepository(connectionWithDb)
-	service := business.NewUsersService(repository)
-	newUsersController := handler.NewUsersController(service)
+	var forgotPasswordRepo repositories.ForgotPasswordRepository
+	if useDBMocks {
+		forgotPasswordRepo = repositories.NewForgotPasswordRepository(useDBMocks)
+	} else {
+		forgotPasswordRepo = repositories.NewForgotPasswordRepository(connectionWithDb)
+	}
+	forgotPasswordService := business.NewUsersService(forgotPasswordRepo)
+	forgotPasswordController := handler.NewUsersController(forgotPasswordService)
+
 	//Dependency Injection for change-password
 	userDatabaseRepo := repositories.NewUserDBRepository(connectionWithDb)
 	passwordService := business.NewChangePasswordService(userDatabaseRepo)
@@ -57,7 +66,7 @@ func GetRouter(middlewares ...gin.HandlerFunc) *gin.Engine {
 		v1Routes.POST(serviceConstant.SignIn, signInController.HandleSignIn)
 		v1Routes.POST(serviceConstant.ValidateOTP, otpValidationController.HandleValidateOTP)
 		v1Routes.PATCH(serviceConstant.ChangePassword, headerCheck.AuthMiddleware(), handler.HandleChangePassword(changePasswordHandler))
-		v1Routes.POST(serviceConstant.ForgotPassword, newUsersController.HandleForgotPassword)
+		v1Routes.POST(serviceConstant.ForgotPassword, forgotPasswordController.HandleForgotPassword)
 		v1Routes.GET(serviceConstant.SwaggerRoute, ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
 	return router

@@ -5,21 +5,20 @@ import (
 	"authentication/repositories"
 )
 
-type NewforgotPasswordService interface {
+type ForgotPasswordService interface {
 	UpdatePassword(credentials models.ForgotPasswordRequest) error
 }
 
-type forgotPasswordSercvice struct {
+type forgotPasswordService struct {
 	userCredentialsInterface repositories.ForgotPasswordRepository
 }
 
-func NewUsersService(userData repositories.ForgotPasswordRepository) NewforgotPasswordService {
-	return &forgotPasswordSercvice{
+func NewForgotPasswordService(userData repositories.ForgotPasswordRepository) ForgotPasswordService {
+	return &forgotPasswordService{
 		userCredentialsInterface: userData,
 	}
 }
 
-func (service *forgotPasswordSercvice) UpdatePassword(userModel models.ForgotPasswordRequest) error {
-
-	return service.userCredentialsInterface.VerifyAndUpdatePassword(userModel.Email, userModel.PanCardNumber, userModel.NewPassword)
+func (service *forgotPasswordService) UpdatePassword(credentials models.ForgotPasswordRequest) error {
+	return service.userCredentialsInterface.VerifyAndUpdatePassword(credentials.Email, credentials.PanCardNumber, credentials.NewPassword)
 }

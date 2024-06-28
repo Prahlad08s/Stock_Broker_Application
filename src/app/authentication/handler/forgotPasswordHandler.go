@@ -13,42 +13,37 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"gorm.io/gorm"
 )
 
-type NewForgetPasswordController interface {
+type ForgotPasswordController interface {
 	HandleForgotPassword(ctx *gin.Context)
 }
 
 type forgotPasswordController struct {
-	service business.NewforgotPasswordService
+	service business.ForgotPasswordService
 }
 
-func NewUsersController(service business.NewforgotPasswordService) NewForgetPasswordController {
+func NewForgotPasswordController(service business.ForgotPasswordService) ForgotPasswordController {
 	return &forgotPasswordController{
 		service: service,
 	}
 }
 
-// UpdateCredentialsHandler updates the user's credentials.
-// @Summary Update user credentials
-// @Description Updates user credentials based on the provided request.
-// @Tags Forgot Password
-// @ID update-credentials
-// @Accept  json
-// @Produce  json
-// @Param request body models.ForgotPasswordRequest true "Forgot Password Request JSON"
-// @Success 200 {object} string "Password updated successfully"
-// @Failure 400 {object} string "Bad request"
-// @Failure 401 {object} string "Unauthorized"
-// @Failure 500 {object} string "Internal server error"
-// @Router /v1/auth/forgot-password [post]
+// HandleForgotPassword updates the user's password.
 func (controller *forgotPasswordController) HandleForgotPassword(context *gin.Context) {
 	var request models.ForgotPasswordRequest
 	if err := context.ShouldBindJSON(&request); err != nil {
-		errorMsgs := genericModel.ErrorMessage{Key: err.(*json.UnmarshalTypeError).Field, ErrorMessage: genericConstants.JsonBindingFieldError}
+		var errorMsgs genericModel.ErrorMessage
+		if unmarshalTypeError, ok := err.(*json.UnmarshalTypeError); ok {
+			errorMsgs = genericModel.ErrorMessage{Key: unmarshalTypeError.Field, ErrorMessage: genericConstants.JsonBindingFieldError}
+		} else {
+			errorMsgs = genericModel.ErrorMessage{Key: "error", ErrorMessage: err.Error()}
+		}
 		utils.SendBadRequest(context, []genericModel.ErrorMessage{errorMsgs})
 		return
 	}
+
 	if err := validations.GetCustomValidator(context.Request.Context()).Struct(request); err != nil {
 		validationErrors := validations.FormatValidationErrors(context.Request.Context(), err.(validator.ValidationErrors))
 		context.JSON(http.StatusBadRequest, gin.H{
@@ -57,15 +52,16 @@ func (controller *forgotPasswordController) HandleForgotPassword(context *gin.Co
 		})
 		return
 	}
+
 	err := controller.service.UpdatePassword(request)
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{genericConstants.GenericJSONErrorMessage: constants.ErrorInvalidUserData})
+		if err == gorm.ErrRecordNotFound {
+			context.JSON(http.StatusNotFound, gin.H{genericConstants.GenericJSONErrorMessage: constants.ErrorInvalidUserData})
+		} else {
+			context.JSON(http.StatusInternalServerError, gin.H{genericConstants.GenericJSONErrorMessage: constants.ErrorInvalidUserData})
+		}
 		return
 	}
-	context.JSON(http.StatusOK, gin.H{genericConstants.GenericJSONMessage: constants.ForgotPasswordSuccessMessage})
 
-	responseModel := genericModel.HttpStatusOkResponse{
-		Message: constants.ForgotPasswordSuccessMessage,
-	}
-	utils.SendStatusOk(context, responseModel)
+	context.JSON(http.StatusOK, gin.H{genericConstants.GenericJSONMessage: constants.ForgotPasswordSuccessMessage})
 }

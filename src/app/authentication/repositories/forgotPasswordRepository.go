@@ -1,17 +1,29 @@
 package repositories
 
 import (
-	"gorm.io/gorm"
 	genericConstants "stock_broker_application/src/constants"
 	dbModels "stock_broker_application/src/models"
+
+	"github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
 )
 
 type ForgotPasswordRepository interface {
-	VerifyAndUpdatePassword(email string, pancardNumber string, newPassword string) error
+	VerifyAndUpdatePassword(email string, panCardNumber string, newPassword string) error
 }
 
 type userDBRepository struct {
 	DB *gorm.DB
+}
+
+// Mock repository for testing
+type MockForgotPasswordRepository struct {
+	mock.Mock
+}
+
+func (m *MockForgotPasswordRepository) VerifyAndUpdatePassword(email string, panCardNumber string, newPassword string) error {
+	m.Called(email, panCardNumber, newPassword)
+	return nil
 }
 
 func NewForgotPasswordRepository(db *gorm.DB) ForgotPasswordRepository {

@@ -7,3 +7,9 @@ token:
   accessTokenExpiryInDays: 1
   refreshTokenExpiryInDays: 5
   secretKey: secret_key
+
+appConfig:
+  UseMocks: false
+
+
+  

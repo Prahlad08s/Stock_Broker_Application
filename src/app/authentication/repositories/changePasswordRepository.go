@@ -1,9 +1,10 @@
 package repositories
 
 import (
-	"gorm.io/gorm"
 	genericConstants "stock_broker_application/src/constants"
 	"stock_broker_application/src/models"
+
+	"gorm.io/gorm"
 )
 
 type ChangePasswordRepository interface {
