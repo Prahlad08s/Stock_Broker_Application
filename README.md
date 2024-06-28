@@ -1,1 +1,0 @@
-# stock_broker_application
